@@ -1,0 +1,169 @@
+/*.login-home {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  background-color: aliceblue;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  font-family: "Roboto";
+  color: black;
+  justify-content: center;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+.text-container-form {
+  box-shadow: 0px 4px 16px 0px #bfbfbf;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.button-login {
+  align-self: flex-end;
+}
+*/
+
+/* Responsive CSS styling */
+/* General reset and styling */
+/* General reset and styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+html {
+  font-family: "Roboto", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin: 0;
+}
+
+/* Container styling */
+.login-home {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  background-color: aliceblue;
+  align-items: center;
+  min-height: 100vh;
+  width: 100vw;
+  color: black;
+  justify-content: center;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+/* Form styling */
+.text-container-form {
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0px 4px 16px 0px #bfbfbf;
+  border-radius: 10px;
+  padding: 20px;
+  background-color: white;
+}
+
+.form-container label {
+  font-size: 16px;
+  color: #555;
+  margin-right: 10px; /* Space between label and input */
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.form-field {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-container input {
+  flex: 1;
+  padding: 8px;
+  font-size: 16px;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
+
+.form-container input:focus {
+  border-color: #4caf50;
+}
+
+.form-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: darkcyan;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.form-container button:hover {
+  background-color: #45a049;
+}
+
+.button-login {
+  margin-top: 10px;
+  color: #007bff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.button-login:hover {
+  color: #0056b3;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 600px) {
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .text-container-form {
+    width: 100%;
+    padding: 15px;
+  }
+}
