@@ -27,10 +27,12 @@ const LoginForm = () => {
       });
 
       const data = await response.json();
+      console.log(username);
       if (response.ok) {
         if (isLogin) {
           toast.success("Login Successful!");
           Cookies.set("authToken", data.token, { expires: 30 }); // Set cookie for 30 days
+          Cookies.set("username", username, { expires: 30 }); // Store username in cookies
           navigate("/home"); // Navigate to Home
         } else {
           toast.success("Registration Successful! Please log in.");

@@ -1,4 +1,3 @@
-// EditEmployeePopup.js
 import React, { Component } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -29,24 +28,23 @@ class EditEmployeePopup extends Component {
       gender: employee.gender || "",
       course: employee.course || "",
       imagePreview: employee.image
-        ? `${this.props.apiUrl}/${employee.image}`
+        ? `http://13.201.134.252:5003/${employee.image}`
         : null,
     });
   }
 
-  handleInputChange = (e) => {
-    this.setState({ [e.target.name]: e.target.value });
+  handleChange = (event) => {
+    const { name, value } = event.target;
+    this.setState({ [name]: value });
   };
 
-  handleImageChange = (e) => {
-    const file = e.target.files[0];
+  handleImageChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        this.setState({ error: "Image size should be less than 5MB" });
+        this.setState({ error: "Image size should not exceed 5MB." });
         return;
       }
-
       this.setState({
         image: file,
         imagePreview: URL.createObjectURL(file),
@@ -55,87 +53,83 @@ class EditEmployeePopup extends Component {
     }
   };
 
-  handleRemoveImage = () => {
-    this.setState({
-      image: null,
-      imagePreview: null,
-    });
-  };
+  handleSubmit = async (event) => {
+    event.preventDefault();
+    const { name, email, mobile, designation, gender, course, image } =
+      this.state;
+    const { employee, onEmployeeUpdated, onClose } = this.props;
 
-  validateForm = () => {
-    const { name, email, mobile } = this.state;
-
-    if (name.trim().length < 2) {
-      this.setState({ error: "Name should be at least 2 characters long" });
-      return false;
-    }
-
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      this.setState({ error: "Please enter a valid email address" });
-      return false;
-    }
-
-    if (!mobile.match(/^\d{10}$/)) {
-      this.setState({ error: "Mobile number should be 10 digits" });
-      return false;
-    }
-
-    return true;
-  };
-
-  handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!this.validateForm()) {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      this.setState({ error: "Authorization token missing." });
       return;
     }
 
-    this.setState({ loading: true, error: null });
-
     try {
-      const formData = new FormData();
-      const fieldsToUpdate = [
-        "name",
-        "email",
-        "mobile",
-        "designation",
-        "gender",
-        "course",
-      ];
+      this.setState({ loading: true, error: null });
 
-      fieldsToUpdate.forEach((field) => {
-        if (this.state[field] !== null && this.state[field] !== undefined) {
-          formData.append(field, this.state[field]);
-        }
-      });
-
-      if (this.state.image) {
-        formData.append("image", this.state.image);
+      let updatedData;
+      if (image) {
+        // If image is present, we send data as multipart/form-data
+        updatedData = new FormData();
+        updatedData.append("name", name);
+        updatedData.append("email", email);
+        updatedData.append("mobile", mobile);
+        updatedData.append("designation", designation);
+        updatedData.append("gender", gender);
+        updatedData.append("course", course);
+        updatedData.append("image", image); // Add image to FormData
+      } else {
+        // If no image, we send data as application/json
+        updatedData = {
+          name,
+          email,
+          mobile,
+          designation,
+          gender,
+          course,
+        };
       }
 
-      const token = Cookies.get("authToken");
+      // Perform PUT request to update employee
       const response = await axios.put(
-        `${this.props.apiUrl}/api/employees/${this.props.employee._id}`,
-        formData,
+        `http://13.201.134.252:5001/api/employees/${employee._id}`,
+        updatedData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
+            // Determine Content-Type based on presence of image
+            "Content-Type": image ? "multipart/form-data" : "application/json",
           },
         }
       );
 
-      this.props.onEmployeeUpdated(response.data);
+      // Callback after successful update
+      onEmployeeUpdated(response.data);
+      onClose();
     } catch (error) {
       console.error("Error updating employee:", error);
       this.setState({
-        error:
-          error.response?.data?.message ||
-          "Failed to update employee. Please try again.",
+        error: error.response?.data?.message || "Failed to update employee.",
       });
     } finally {
       this.setState({ loading: false });
     }
+  };
+
+  handleCancel = () => {
+    this.setState({
+      name: "",
+      email: "",
+      mobile: "",
+      designation: "",
+      gender: "",
+      course: "",
+      image: null,
+      imagePreview: null,
+      error: null,
+    });
+    this.props.onClose();
   };
 
   render() {
@@ -150,155 +144,99 @@ class EditEmployeePopup extends Component {
       loading,
       error,
     } = this.state;
-
     return (
-      <div className="edit-popup-overlay">
-        <div className="edit-popup-content">
-          <div className="edit-popup-header">
-            <h2>Edit Employee</h2>
-            <button
-              className="close-button"
-              onClick={this.props.onClose}
-              disabled={loading}
-            >
-              <FaTimes />
-            </button>
-          </div>
-
-          {error && <div className="error-message">{error}</div>}
-
-          <form onSubmit={this.handleSubmit} className="edit-form">
-            <div className="image-upload-section">
-              <div className="image-preview-container">
-                {imagePreview ? (
-                  <>
-                    <img
-                      src={imagePreview}
-                      alt="Employee"
-                      className="employee-image-preview"
-                    />
-                    <button
-                      type="button"
-                      className="remove-image-btn"
-                      onClick={this.handleRemoveImage}
-                    >
-                      <FaTimes />
-                    </button>
-                  </>
-                ) : (
-                  <div className="image-placeholder">
-                    <FaCamera size={24} />
-                    <span>No Image</span>
-                  </div>
+      <div className="popup-overlay">
+        <div className="popup-content">
+          <h2>Edit Employee</h2>
+          <form onSubmit={this.handleSubmit}>
+            {error && <div className="error-message">{error}</div>}
+            <div className="form-field">
+              <label>Name</label>
+              <input
+                type="text"
+                name="name"
+                value={name}
+                onChange={this.handleChange}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                value={email}
+                onChange={this.handleChange}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Mobile</label>
+              <input
+                type="text"
+                name="mobile"
+                value={mobile}
+                onChange={this.handleChange}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Designation</label>
+              <input
+                type="text"
+                name="designation"
+                value={designation}
+                onChange={this.handleChange}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Gender</label>
+              <input
+                type="text"
+                name="gender"
+                value={gender}
+                onChange={this.handleChange}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Course</label>
+              <input
+                type="text"
+                name="course"
+                value={course}
+                onChange={this.handleChange}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Image</label>
+              <div className="image-upload-container">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={this.handleImageChange}
+                />
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="image-preview"
+                  />
                 )}
               </div>
-              <input
-                type="file"
-                id="image-upload"
-                className="hidden-input"
-                onChange={this.handleImageChange}
-                accept="image/*"
-              />
-              <label htmlFor="image-upload" className="upload-button">
-                Change Photo
-              </label>
             </div>
-
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Name:</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={name}
-                  onChange={this.handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email:</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={email}
-                  onChange={this.handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Mobile:</label>
-                <input
-                  type="tel"
-                  name="mobile"
-                  value={mobile}
-                  onChange={this.handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Designation:</label>
-                <select
-                  name="designation"
-                  value={designation}
-                  onChange={this.handleInputChange}
-                  required
-                >
-                  <option value="">Select Designation</option>
-                  <option value="Full Stack Developer">
-                    Full Stack Developer
-                  </option>
-                  <option value="Mern Stack Developer">
-                    MERN Stack Developer
-                  </option>
-                  <option value="Manager">Manager</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Gender:</label>
-                <select
-                  name="gender"
-                  value={gender}
-                  onChange={this.handleInputChange}
-                  required
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Course:</label>
-                <select
-                  name="course"
-                  value={course}
-                  onChange={this.handleInputChange}
-                  required
-                >
-                  <option value="">Select Course</option>
-                  <option value="MCA">MCA</option>
-                  <option value="BCA">BCA</option>
-                  <option value="BSc">BSc</option>
-                </select>
-              </div>
-            </div>
-
             <div className="form-actions">
+              <button type="submit" disabled={loading}>
+                {loading ? "Updating..." : "Update"}
+              </button>
               <button
                 type="button"
-                onClick={this.props.onClose}
-                className="cancel-button"
-                disabled={loading}
+                onClick={this.handleCancel}
+                className="cancel-btn"
               >
                 Cancel
-              </button>
-              <button type="submit" className="save-button" disabled={loading}>
-                {loading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </form>

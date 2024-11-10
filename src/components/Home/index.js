@@ -4,9 +4,9 @@ import axios from "axios";
 import { Navigate } from "react-router-dom";
 import { FaEdit, FaTrashAlt, FaPlus } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
-
 import "react-toastify/dist/ReactToastify.css";
 import CreateEmployeePopup from "../CreateEmployeePopup";
+import EditEmployeePopup from "../EditEmployeePopup";
 import "./index.css";
 
 class Home extends Component {
@@ -15,7 +15,9 @@ class Home extends Component {
     employees: [],
     searchQuery: "",
     username: "",
-    showPopup: false,
+    showCreatePopup: false,
+    showEditPopup: false,
+    selectedEmployee: null,
   };
 
   componentDidMount() {
@@ -60,17 +62,17 @@ class Home extends Component {
   };
 
   handleCreateEmployee = () => {
-    this.setState({ showPopup: true });
+    this.setState({ showCreatePopup: true });
   };
 
-  handleClosePopup = () => {
-    this.setState({ showPopup: false });
+  handleCloseCreatePopup = () => {
+    this.setState({ showCreatePopup: false });
   };
 
   handleEmployeeCreated = (newEmployee) => {
     this.setState((prevState) => ({
       employees: [...prevState.employees, newEmployee],
-      showPopup: false,
+      showCreatePopup: false,
     }));
   };
 
@@ -109,9 +111,40 @@ class Home extends Component {
     }
   };
 
+  handleEditEmployee = (employee) => {
+    this.setState({
+      selectedEmployee: employee,
+      showEditPopup: true,
+    });
+  };
+
+  handleCloseEditPopup = () => {
+    this.setState({
+      showEditPopup: false,
+      selectedEmployee: null,
+    });
+  };
+
+  handleEmployeeUpdated = (updatedEmployee) => {
+    this.setState((prevState) => ({
+      employees: prevState.employees.map((employee) =>
+        employee._id === updatedEmployee._id ? updatedEmployee : employee
+      ),
+      showEditPopup: false,
+      selectedEmployee: null,
+    }));
+  };
+
   render() {
-    const { loggedOut, employees, searchQuery, username, showPopup } =
-      this.state;
+    const {
+      loggedOut,
+      employees,
+      searchQuery,
+      username,
+      showCreatePopup,
+      showEditPopup,
+      selectedEmployee,
+    } = this.state;
     const filteredEmployees = employees.filter((employee) =>
       employee.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -155,7 +188,6 @@ class Home extends Component {
               />
               <button onClick={() => this.fetchEmployees()}>Search</button>
             </div>
-
             <button
               onClick={this.handleCreateEmployee}
               className="create-employee-btn"
@@ -167,7 +199,6 @@ class Home extends Component {
           <table className="employee-table">
             <thead>
               <tr>
-                <th>Image</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Mobile</th>
@@ -180,22 +211,6 @@ class Home extends Component {
             <tbody>
               {filteredEmployees.map((employee) => (
                 <tr key={employee._id}>
-                  <td>
-                    {employee.image ? (
-                      <img
-                        src={`http://13.201.134.252:5003/${employee.image}`}
-                        alt="Employee"
-                        className="employee-image"
-                        onError={(e) => {
-                          console.error("Image failed to load:", e.target.src);
-                          e.target.onerror = null;
-                          e.target.src = "path/to/fallback/image.png";
-                        }}
-                      />
-                    ) : (
-                      <span>No Image</span>
-                    )}
-                  </td>
                   <td>{employee.name}</td>
                   <td>{employee.email}</td>
                   <td>{employee.mobile}</td>
@@ -203,7 +218,10 @@ class Home extends Component {
                   <td>{employee.gender}</td>
                   <td>{employee.course}</td>
                   <td>
-                    <button className="edit-btn">
+                    <button
+                      className="edit-btn"
+                      onClick={() => this.handleEditEmployee(employee)}
+                    >
                       <FaEdit />
                     </button>
                     <button
@@ -218,10 +236,18 @@ class Home extends Component {
             </tbody>
           </table>
 
-          {showPopup && (
+          {showCreatePopup && (
             <CreateEmployeePopup
-              onClose={this.handleClosePopup}
+              onClose={this.handleCloseCreatePopup}
               onEmployeeAdded={this.handleEmployeeCreated}
+            />
+          )}
+          {showEditPopup && (
+            <EditEmployeePopup
+              employee={selectedEmployee}
+              apiUrl="http://13.201.134.252:5001"
+              onClose={this.handleCloseEditPopup}
+              onEmployeeUpdated={this.handleEmployeeUpdated}
             />
           )}
         </div>
